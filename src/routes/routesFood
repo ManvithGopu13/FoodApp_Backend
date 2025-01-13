@@ -1,0 +1,43 @@
+const express = require("express");
+const Food = require("../models/Food");
+
+const router = express.Router();
+
+// Add a new food item
+router.post("/add", async (req, res) => {
+  try {
+    const { name, description, price, imageUrl } = req.body;
+    const newFood = new Food({ name, description, price, imageUrl });
+    await newFood.save();
+    res.status(201).json({ message: "Food added successfully.", food: newFood });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get all food items
+router.get("/", async (req, res) => {
+  try {
+    const foods = await Food.find().sort({ createdAt: -1 });
+    res.status(200).json(foods);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add a food item to user favorites
+router.post("/favorite", async (req, res) => {
+  try {
+    const { userId, foodId } = req.body;
+    const food = await Food.findById(foodId);
+    if (!food) return res.status(404).json({ error: "Food not found." });
+
+    food.favorites.push(userId);
+    await food.save();
+    res.status(200).json({ message: "Favorite added successfully." });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
